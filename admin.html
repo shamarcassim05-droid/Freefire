@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blaze Topup — Admin</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Chakra+Petch:wght@400;500;600;700&display=swap');
+
+  :root{
+    --bg:#0b0d10;
+    --bg-soft:#12151a;
+    --panel:#171b20;
+    --line:#262b32;
+    --flame1:#ff5b1f;
+    --flame2:#ffb020;
+    --ice:#37e8ff;
+    --green:#3ddc84;
+    --red:#ff5c5c;
+    --text:#eef1f4;
+    --muted:#8b93a0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:'Chakra Petch', sans-serif;
+    min-height:100vh;
+  }
+  h1,h2,h3,.display{font-family:'Rajdhani', sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:0.02em;}
+
+  /* ---- LOGIN GATE ---- */
+  #login-screen{
+    min-height:100vh; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:16px;
+  }
+  #login-screen .flame-mark{
+    width:38px;height:38px;
+    background:linear-gradient(140deg, var(--flame2), var(--flame1));
+    clip-path:polygon(50% 0%, 78% 35%, 65% 40%, 85% 65%, 50% 100%, 15% 65%, 35% 40%, 22% 35%);
+    margin-bottom:6px;
+  }
+  #login-screen h1{font-size:26px;}
+  #login-box{
+    background:var(--panel); border:1px solid var(--line); border-radius:12px;
+    padding:28px; width:300px;
+  }
+  #login-box input{
+    width:100%; background:var(--bg-soft); border:1px solid var(--line); color:var(--text);
+    padding:12px; border-radius:6px; font-size:15px; letter-spacing:0.2em; text-align:center;
+    margin-bottom:12px; font-family:'Chakra Petch';
+  }
+  #login-box input:focus{outline:none;border-color:var(--ice);}
+  #login-box button{
+    width:100%; padding:12px 0; background:linear-gradient(120deg,var(--flame1),var(--flame2));
+    border:none; border-radius:6px; color:#12151a; font-weight:700; cursor:pointer; font-family:'Chakra Petch';
+  }
+  #login-error{color:var(--red); font-size:12px; text-align:center; min-height:16px;}
+  #login-hint{color:var(--muted); font-size:11px; text-align:center; margin-top:10px;}
+
+  /* ---- APP SHELL ---- */
+  #app{display:none;}
+  header{
+    position:sticky; top:0; z-index:20;
+    background:rgba(11,13,16,0.9); backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  header .wrap{max-width:1180px;margin:0 auto;padding:0 24px;height:64px;display:flex;align-items:center;justify-content:space-between;}
+  .logo{font-size:19px;display:flex;align-items:center;gap:8px;}
+  .logo span{color:var(--flame1);}
+  .flame-mark-sm{
+    width:18px;height:18px;
+    background:linear-gradient(140deg, var(--flame2), var(--flame1));
+    clip-path:polygon(50% 0%, 78% 35%, 65% 40%, 85% 65%, 50% 100%, 15% 65%, 35% 40%, 22% 35%);
+  }
+  #logout-btn{background:none;border:1px solid var(--line);color:var(--muted);padding:8px 14px;border-radius:6px;cursor:pointer;font-family:'Chakra Petch';font-size:13px;}
+  #logout-btn:hover{border-color:var(--red);color:var(--red);}
+
+  .wrap{max-width:1180px;margin:0 auto;padding:0 24px;}
+  main{padding:32px 0 80px;}
+
+  /* tabs */
+  .tabs{display:flex;gap:6px;margin-bottom:28px;border-bottom:1px solid var(--line);}
+  .tab{
+    padding:12px 18px; cursor:pointer; color:var(--muted); font-size:14px; font-weight:600;
+    border-bottom:2px solid transparent; letter-spacing:0.02em;
+  }
+  .tab.active{color:var(--flame2);border-bottom-color:var(--flame1);}
+
+  .panel{display:none;}
+  .panel.active{display:block;}
+
+  /* stats */
+  .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:32px;}
+  .stat-card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px;}
+  .stat-card .label{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:0.05em;}
+  .stat-card .value{font-family:'Rajdhani';font-size:32px;font-weight:700;margin-top:6px;color:var(--flame2);}
+  .stat-card .value.green{color:var(--green);}
+  .stat-card .value.ice{color:var(--ice);}
+
+  .sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px;}
+  .sec-head h2{font-size:20px;}
+  .btn{
+    background:linear-gradient(120deg,var(--flame1),var(--flame2)); border:none; color:#12151a;
+    padding:9px 16px; border-radius:6px; font-weight:700; font-size:13px; cursor:pointer; font-family:'Chakra Petch';
+  }
+  .btn.ghost{background:none;border:1px solid var(--line);color:var(--text);}
+  .btn.ghost:hover{border-color:var(--flame1);}
+  .btn.danger{background:none;border:1px solid var(--red);color:var(--red);}
+
+  /* table */
+  table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+  thead th{
+    text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:var(--muted);
+    padding:12px 14px; border-bottom:1px solid var(--line); background:var(--bg-soft);
+  }
+  tbody td{padding:12px 14px;font-size:13px;border-bottom:1px solid var(--line);}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:var(--bg-soft);}
+  .status-pill{
+    padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700; letter-spacing:0.03em; display:inline-block;
+  }
+  .status-pending{background:rgba(255,176,32,0.15);color:var(--flame2);}
+  .status-paid{background:rgba(55,232,255,0.15);color:var(--ice);}
+  .status-delivered{background:rgba(61,220,132,0.15);color:var(--green);}
+  select.status-select{
+    background:var(--bg-soft);border:1px solid var(--line);color:var(--text);
+    padding:6px 8px;border-radius:6px;font-size:12px;font-family:'Chakra Petch';
+  }
+  .empty-state{text-align:center;padding:48px 20px;color:var(--muted);}
+  .empty-state .flame-mark-sm{margin:0 auto 12px;width:28px;height:28px;opacity:0.4;}
+
+  /* packages grid */
+  .pkg-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;}
+  .pkg-card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;position:relative;}
+  .pkg-card .amt{font-family:'Rajdhani';font-size:22px;font-weight:700;}
+  .pkg-card .price{margin-top:8px;font-size:18px;color:var(--flame2);font-weight:600;}
+  .pkg-card .actions{margin-top:14px;display:flex;gap:8px;}
+  .pkg-card .actions button{flex:1;padding:7px 0;font-size:12px;border-radius:6px;cursor:pointer;font-family:'Chakra Petch';}
+  .edit-btn{background:none;border:1px solid var(--line);color:var(--text);}
+  .del-btn{background:none;border:1px solid var(--red);color:var(--red);}
+
+  /* modal */
+  .modal-overlay{
+    display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:100;
+    align-items:center; justify-content:center;
+  }
+  .modal-overlay.show{display:flex;}
+  .modal{
+    background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:28px; width:340px;
+  }
+  .modal h3{font-size:18px;margin-bottom:16px;}
+  .field{margin-bottom:12px;}
+  .field label{display:block;font-size:11px;color:var(--muted);margin-bottom:5px;letter-spacing:0.03em;}
+  .field input{
+    width:100%; background:var(--bg-soft); border:1px solid var(--line); color:var(--text);
+    padding:10px 12px; border-radius:6px; font-family:'Chakra Petch'; font-size:14px;
+  }
+  .field input:focus{outline:none;border-color:var(--ice);}
+  .modal-actions{display:flex;gap:8px;margin-top:18px;}
+  .modal-actions button{flex:1;padding:10px 0;border-radius:6px;cursor:pointer;font-family:'Chakra Petch';font-weight:600;font-size:13px;}
+  .loading{color:var(--muted);font-size:13px;padding:20px;text-align:center;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="flame-mark"></div>
+  <h1>Blaze Topup Admin</h1>
+  <div id="login-box">
+    <input type="password" id="pin-input" placeholder="PIN එක type කරන්න" maxlength="6">
+    <button id="pin-submit">Login</button>
+    <div id="login-error"></div>
+  </div>
+  <div id="login-hint">Demo PIN: 1234 — production eke real auth එකකට replace කරන්න</div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <header>
+    <div class="wrap">
+      <div class="logo"><span class="flame-mark-sm"></span>Blaze<span>Topup</span> Admin</div>
+      <button id="logout-btn">Log out</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="tabs">
+      <div class="tab active" data-tab="dashboard">Dashboard</div>
+      <div class="tab" data-tab="orders">Orders</div>
+      <div class="tab" data-tab="packages">Packages</div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="panel active" id="panel-dashboard">
+      <div class="stat-grid" id="stat-grid">
+        <div class="loading">Loading stats…</div>
+      </div>
+      <div class="sec-head"><h2>Recent Orders</h2></div>
+      <div id="recent-orders-wrap"><div class="loading">Loading…</div></div>
+    </div>
+
+    <!-- ORDERS -->
+    <div class="panel" id="panel-orders">
+      <div class="sec-head">
+        <h2>All Orders</h2>
+        <div style="display:flex;gap:8px;">
+          <button class="btn ghost" id="seed-demo-btn">+ Add demo order</button>
+        </div>
+      </div>
+      <div id="orders-table-wrap"><div class="loading">Loading orders…</div></div>
+    </div>
+
+    <!-- PACKAGES -->
+    <div class="panel" id="panel-packages">
+      <div class="sec-head">
+        <h2>Diamond Packages</h2>
+        <button class="btn" id="add-pkg-btn">+ Add package</button>
+      </div>
+      <div class="pkg-grid" id="pkg-grid"><div class="loading">Loading packages…</div></div>
+    </div>
+  </main>
+</div>
+
+<!-- PACKAGE MODAL -->
+<div class="modal-overlay" id="pkg-modal-overlay">
+  <div class="modal">
+    <h3 id="pkg-modal-title">Add Package</h3>
+    <input type="hidden" id="pkg-edit-id">
+    <div class="field"><label>Package name (e.g. 520 💎)</label><input id="pkg-name" placeholder="520 💎"></div>
+    <div class="field"><label>Bonus text (optional)</label><input id="pkg-bonus" placeholder="+20 bonus"></div>
+    <div class="field"><label>Price (Rs.)</label><input id="pkg-price" type="number" placeholder="1750"></div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="pkg-cancel-btn">Cancel</button>
+      <button class="btn" id="pkg-save-btn">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const PIN = "1234";
+let orders = [];
+let packages = [];
+
+// ---------- LOGIN ----------
+document.getElementById('pin-submit').onclick = tryLogin;
+document.getElementById('pin-input').addEventListener('keydown', e => { if(e.key === 'Enter') tryLogin(); });
+
+function tryLogin(){
+  const val = document.getElementById('pin-input').value;
+  if(val === PIN){
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    initApp();
+  } else {
+    document.getElementById('login-error').textContent = 'PIN එක වැරදියි, try again';
+  }
+}
+document.getElementById('logout-btn').onclick = () => location.reload();
+
+// ---------- TABS ----------
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.onclick = () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+  };
+});
+
+// ---------- DATA LAYER ----------
+async function loadOrders(){
+  try{
+    const res = await window.storage.get('orders', true);
+    orders = res ? JSON.parse(res.value) : [];
+  }catch(e){ orders = []; }
+}
+async function saveOrders(){
+  try{ await window.storage.set('orders', JSON.stringify(orders), true); }
+  catch(e){ console.error('Failed to save orders', e); }
+}
+async function loadPackages(){
+  try{
+    const res = await window.storage.get('packages', true);
+    packages = res ? JSON.parse(res.value) : null;
+  }catch(e){ packages = null; }
+  if(!packages || packages.length === 0){
+    packages = [
+      {id:'p1', name:'100 💎', bonus:'', price:350},
+      {id:'p2', name:'310 💎', bonus:'+10 bonus', price:1050},
+      {id:'p3', name:'520 💎', bonus:'+20 bonus', price:1750},
+      {id:'p4', name:'1060 💎', bonus:'+60 bonus', price:3500},
+      {id:'p5', name:'2180 💎', bonus:'+180 bonus', price:7000},
+    ];
+    await savePackages();
+  }
+}
+async function savePackages(){
+  try{ await window.storage.set('packages', JSON.stringify(packages), true); }
+  catch(e){ console.error('Failed to save packages', e); }
+}
+
+// ---------- INIT ----------
+async function initApp(){
+  await Promise.all([loadOrders(), loadPackages()]);
+  renderDashboard();
+  renderOrders();
+  renderPackages();
+}
+
+// ---------- DASHBOARD ----------
+function renderDashboard(){
+  const total = orders.length;
+  const pending = orders.filter(o => o.status === 'pending').length;
+  const revenue = orders.filter(o => o.status !== 'pending')
+    .reduce((sum,o) => sum + Number(o.price || 0), 0);
+
+  document.getElementById('stat-grid').innerHTML = `
+    <div class="stat-card"><div class="label">Total Orders</div><div class="value">${total}</div></div>
+    <div class="stat-card"><div class="label">Pending</div><div class="value">${pending}</div></div>
+    <div class="stat-card"><div class="label">Confirmed Revenue</div><div class="value green">Rs. ${revenue.toLocaleString()}</div></div>
+    <div class="stat-card"><div class="label">Packages Listed</div><div class="value ice">${packages.length}</div></div>
+  `;
+
+  const recent = [...orders].sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0,5);
+  document.getElementById('recent-orders-wrap').innerHTML = recent.length
+    ? buildOrdersTable(recent, false)
+    : emptyState('තාම orders නෑ. Store එකෙන් order එකක් එනකම් හෝ demo order එකක් add කරන්න.');
+  bindStatusSelectors();
+}
+
+// ---------- ORDERS ----------
+function renderOrders(){
+  const sorted = [...orders].sort((a,b) => new Date(b.date) - new Date(a.date));
+  document.getElementById('orders-table-wrap').innerHTML = sorted.length
+    ? buildOrdersTable(sorted, true)
+    : emptyState('තාම orders නෑ. Store එකට connect කරාට පස්සේ orders මෙතන පෙන්නනවා.');
+  bindStatusSelectors();
+}
+
+function buildOrdersTable(list, showDelete){
+  const rows = list.map(o => `
+    <tr>
+      <td>#${o.id}</td>
+      <td>${escapeHtml(o.playerId || '—')}</td>
+      <td>${escapeHtml(o.package || '—')}</td>
+      <td>Rs. ${Number(o.price||0).toLocaleString()}</td>
+      <td>${escapeHtml(o.contact || '—')}</td>
+      <td>${formatDate(o.date)}</td>
+      <td>
+        <select class="status-select" data-id="${o.id}">
+          <option value="pending" ${o.status==='pending'?'selected':''}>Pending</option>
+          <option value="paid" ${o.status==='paid'?'selected':''}>Paid</option>
+          <option value="delivered" ${o.status==='delivered'?'selected':''}>Delivered</option>
+        </select>
+      </td>
+      ${showDelete ? `<td><button class="btn danger" data-del-id="${o.id}" style="padding:6px 10px;font-size:11px;">Delete</button></td>` : ''}
+    </tr>
+  `).join('');
+
+  return `
+    <table>
+      <thead><tr>
+        <th>Order</th><th>Player ID</th><th>Package</th><th>Price</th><th>Contact</th><th>Date</th><th>Status</th>${showDelete ? '<th></th>' : ''}
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
+function bindStatusSelectors(){
+  document.querySelectorAll('.status-select').forEach(sel => {
+    sel.onchange = async () => {
+      const id = sel.dataset.id;
+      const order = orders.find(o => String(o.id) === String(id));
+      if(order){
+        order.status = sel.value;
+        await saveOrders();
+        renderDashboard();
+        renderOrders();
+      }
+    };
+  });
+  document.querySelectorAll('[data-del-id]').forEach(btn => {
+    btn.onclick = async () => {
+      const id = btn.dataset.delId;
+      orders = orders.filter(o => String(o.id) !== String(id));
+      await saveOrders();
+      renderDashboard();
+      renderOrders();
+    };
+  });
+}
+
+document.getElementById('seed-demo-btn').onclick = async () => {
+  const pkg = packages[Math.floor(Math.random()*packages.length)];
+  const newOrder = {
+    id: Date.now(),
+    playerId: String(Math.floor(100000000 + Math.random()*900000000)),
+    package: pkg.name,
+    price: pkg.price,
+    contact: '07' + Math.floor(10000000 + Math.random()*89999999),
+    status: 'pending',
+    date: new Date().toISOString()
+  };
+  orders.push(newOrder);
+  await saveOrders();
+  renderDashboard();
+  renderOrders();
+};
+
+// ---------- PACKAGES ----------
+function renderPackages(){
+  document.getElementById('pkg-grid').innerHTML = packages.map(p => `
+    <div class="pkg-card">
+      <div class="amt">${escapeHtml(p.name)}</div>
+      ${p.bonus ? `<div style="color:var(--flame2);font-size:12px;margin-top:2px;">${escapeHtml(p.bonus)}</div>` : ''}
+      <div class="price">Rs. ${Number(p.price).toLocaleString()}</div>
+      <div class="actions">
+        <button class="edit-btn" data-edit-id="${p.id}">Edit</button>
+        <button class="del-btn" data-del-pkg-id="${p.id}">Delete</button>
+      </div>
+    </div>
+  `).join('');
+
+  document.querySelectorAll('[data-edit-id]').forEach(btn => {
+    btn.onclick = () => openPkgModal(packages.find(p => p.id === btn.dataset.editId));
+  });
+  document.querySelectorAll('[data-del-pkg-id]').forEach(btn => {
+    btn.onclick = async () => {
+      packages = packages.filter(p => p.id !== btn.dataset.delPkgId);
+      await savePackages();
+      renderPackages();
+      renderDashboard();
+    };
+  });
+}
+
+document.getElementById('add-pkg-btn').onclick = () => openPkgModal(null);
+document.getElementById('pkg-cancel-btn').onclick = closePkgModal;
+
+function openPkgModal(pkg){
+  document.getElementById('pkg-modal-title').textContent = pkg ? 'Edit Package' : 'Add Package';
+  document.getElementById('pkg-edit-id').value = pkg ? pkg.id : '';
+  document.getElementById('pkg-name').value = pkg ? pkg.name : '';
+  document.getElementById('pkg-bonus').value = pkg ? pkg.bonus : '';
+  document.getElementById('pkg-price').value = pkg ? pkg.price : '';
+  document.getElementById('pkg-modal-overlay').classList.add('show');
+}
+function closePkgModal(){
+  document.getElementById('pkg-modal-overlay').classList.remove('show');
+}
+
+document.getElementById('pkg-save-btn').onclick = async () => {
+  const id = document.getElementById('pkg-edit-id').value;
+  const name = document.getElementById('pkg-name').value.trim();
+  const bonus = document.getElementById('pkg-bonus').value.trim();
+  const price = Number(document.getElementById('pkg-price').value);
+  if(!name || !price){ alert('Package name සහ price දෙකම දාන්න.'); return; }
+
+  if(id){
+    const p = packages.find(p => p.id === id);
+    p.name = name; p.bonus = bonus; p.price = price;
+  } else {
+    packages.push({id:'p'+Date.now(), name, bonus, price});
+  }
+  await savePackages();
+  renderPackages();
+  renderDashboard();
+  closePkgModal();
+};
+
+// ---------- HELPERS ----------
+function emptyState(msg){
+  return `<div class="empty-state"><div class="flame-mark-sm" style="margin:0 auto 12px;"></div>${msg}</div>`;
+}
+function formatDate(iso){
+  if(!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-GB', {day:'2-digit',month:'short'}) + ' ' + d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+}
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+</script>
+</body>
+</html>
